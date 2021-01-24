@@ -5,18 +5,28 @@ sudo sysctl net.ipv4.ip_forward=1
 sudo modprobe mpls_router
 sudo modprobe mpls_iptunnel
 sudo sysctl net.mpls.platform_labels=10000
-sudo sysctl net.mpls.conf.eth1.input=1
+sudo sysctl net.mpls.conf.ens6.input=1
 if [[ "$X" = "R2" ]]; then
-    sudo sysctl net.mpls.conf.eth2.input=1
+    sudo sysctl net.mpls.conf.ens7.input=1
 fi
 sudo ip addr add 172.20.15.${X: -1}/32 dev lo
-wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr_6.0-1.debian9+1_amd64.deb
-wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-dbg_6.0-1.debian9+1_amd64.deb
-wget https://github.com/FRRouting/frr/releases/download/frr-6.0/frr-pythontools_6.0-1.debian9+1_all.deb
-sudo apt install -y libc-ares2 libjson-c3 python-ipaddr tcpdump vim
-sudo dpkg -i frr_6.0-1.debian9+1_amd64.deb 
-sudo dpkg -i frr-dbg_6.0-1.debian9+1_amd64.deb 
-sudo dpkg -i frr-pythontools_6.0-1.debian9+1_all.deb 
+
+# install some dependencies
+sudo apt install -y libc-ares2 libjson-c3 python-ipaddr tcpdump vim curl gnupg
+
+# add GPG key
+curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -
+
+# possible values for FRRVER: frr-6 frr-7 frr-stable
+# frr-stable will be the latest official stable release
+FRRVER="frr-stable"
+echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
+
+# update and install FRR
+sudo apt update -y && sudo apt install -y frr frr-pythontools
+
 echo -e 'zebra=yes\nisisd=yes\nldpd=yes' > frr-daemons
 sudo mv frr-daemons /etc/frr/daemons
 sudo systemctl start frr.service
+# I need this to make isis/ldp active
+sudo systemctl reload frr.service
