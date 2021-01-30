@@ -25,8 +25,16 @@ echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) $FRRVER | sudo tee -
 # update and install FRR
 sudo apt update -y && sudo apt install -y frr frr-pythontools
 
+# prepare daemons
 echo -e 'zebra=yes\nisisd=yes\nldpd=yes' > frr-daemons
 sudo mv frr-daemons /etc/frr/daemons
 sudo systemctl start frr.service
+
+# copy config to frr
+sudo cp /vagrant/${X,,}_frr_full_config /etc/frr/frr.conf
+
 # I need this to make isis/ldp active
 sudo systemctl reload frr.service
+
+# isis and ldp take some time to come up
+sleep 5
