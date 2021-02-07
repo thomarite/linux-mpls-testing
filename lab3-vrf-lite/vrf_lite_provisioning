@@ -58,3 +58,7 @@ else
     sudo ip route add 192.168.$ceroute.0/24 via 192.168.$router.101
 fi
 sudo apt install -y tcpdump
+# for searching packages
+sudo apt install -y apt-file
+# for arp command
+sudo apt install -y net-tools
