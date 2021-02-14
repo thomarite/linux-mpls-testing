@@ -23,7 +23,7 @@ case "$X" in
 esac
 
 sudo ip addr add 172.20.5."$loopback_addr"/32 dev lo
-sudo apt install -y tcpdump vim
+sudo apt install -y tcpdump vim curl gnupg
 if [[ !("$router_type" =~ "ce") ]]; then
     sudo sysctl net.ipv4.ip_forward=1
     sudo sysctl net.ipv6.conf.all.disable_ipv6=0
@@ -36,7 +36,7 @@ if [[ !("$router_type" =~ "ce") ]]; then
     done
 
     # install some dependencies
-    sudo apt install -y libc-ares2 libjson-c3 python-ipaddr python3-jinja2 tcpdump vim curl gnupg
+    sudo apt install -y libc-ares2 libjson-c3 python-ipaddr python3-jinja2
 
     # add GPG key
     curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -
@@ -50,22 +50,27 @@ if [[ !("$router_type" =~ "ce") ]]; then
     sudo apt update -y && sudo apt install -y frr frr-pythontools
 
     # prepare daemons
-    echo -e 'zebra=yes\nisisd=yes\nldpd=yes' > frr-daemons
+    echo -e 'zebra=yes\nbgpd=yes\nisisd=yes\nldpd=yes' > frr-daemons
     sudo mv frr-daemons /etc/frr/daemons
+    sudo systemctl start frr.service
 
     # prepare config
     python3 gen_frr_config.py
     sudo mv frr_generated_config /etc/frr/frr.conf
     sudo chown frr:frr /etc/frr/daemons
     sudo chown frr:frr /etc/frr/frr.conf
-    sudo systemctl start frr.service
+    # needed for making isis/ldp active
+    sudo systemctl reload frr.service
+    # isis and ldp take some time to come up
+    sleep 5
 
 else
     ce_address=$(ip -br -4 address show ens6)
     IFS=' ' read -ra addr <<< "$ce_address"
     IFS='.' read -ra octets <<< "${addr[-1]}"
     subnet=${octets[2]}
-    sudo ip route add 192.168.0.0/16 via 192.168."$subnet".100
+    peer_subnet=$(( (subnet*2) + (subnet%2) ))
+    sudo ip route add 192.168.0.0/16 via 192.168."$peer_subnet".100
 fi
 if [[ "$router_type" =~ "pe" ]]; then
     sudo ip route add blackhole 0.0.0.0/0 table 10
