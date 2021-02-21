@@ -23,7 +23,7 @@ case "$X" in
 esac
 
 sudo ip addr add 172.20.5."$loopback_addr"/32 dev lo
-sudo apt install -y tcpdump vim curl gnupg
+sudo apt install -y tcpdump vim curl gnupg net-tools
 if [[ !("$router_type" =~ "ce") ]]; then
     sudo sysctl net.ipv4.ip_forward=1
     sudo sysctl net.ipv6.conf.all.disable_ipv6=0
@@ -61,9 +61,9 @@ if [[ !("$router_type" =~ "ce") ]]; then
     sudo chown frr:frr /etc/frr/daemons
     sudo chown frr:frr /etc/frr/frr.conf
     # needed for making isis/ldp active
+    sleep 5
     sudo systemctl reload frr.service
     # isis and ldp take some time to come up
-    sleep 5
 
 else
     ce_address=$(ip -br -4 address show ens6)
