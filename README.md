@@ -26,6 +26,8 @@ More details here: https://blog.thomarite.uk/index.php/2021/02/07/linuxmpls-part
 ---
 
 ## Part4 - FRR L3VPN
+More details here: https://blog.thomarite.uk/index.php/2021/02/27/linuxmpls-part4/
+
 ![](lab4-l3vpn/diagram/linux-mpls-lab4-v0.png)
 
 
